@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Proxy</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="login-shell">
+    <div class="login-box">
+      <div class="brand">LLM PROXY</div>
+      <div class="brand-sub">OpenAI-compatible AI gateway relay</div>
+      <form method="post" action="/admin/login">
+        <input type="text" name="username" placeholder="username" autocomplete="username" required autofocus>
+        <input type="password" name="password" placeholder="password" autocomplete="current-password" required>
+        <button type="submit">connect</button>
+        {% if error %}<div class="login-error">{{ error }}</div>{% endif %}
+      </form>
+    </div>
+  </div>
+</body>
+</html>

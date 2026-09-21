@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Proxy</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="dash-header">
+    <div class="brand">LLM PROXY</div>
+    <nav class="nav-links">
+      <a href="/admin" class="active">dashboard</a>
+      <a href="/admin/settings">settings</a>
+      <form method="post" action="/admin/logout"><button class="logout-btn" type="submit">sign out ({{ user }})</button></form>
+    </nav>
+  </header>
+
+  {% if not gateway %}
+  <div class="banner">
+    No AI gateway configured yet &mdash; requests to <code>/v1/chat/completions</code> will fail until you
+    <a href="/admin/settings">set one up in Settings</a>.
+  </div>
+  {% endif %}
+
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-value">
+        <span class="dot {{ 'running' if status.state == 'PROCESSING' else '' }}"></span>
+        {{ status.state }}
+      </span>
+      <span class="stat-label">Activity</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">
+        {% if status.last_usage %}{{ status.last_usage.prompt_tokens }} / {{ status.last_usage.completion_tokens }}{% else %}&mdash;{% endif %}
+      </span>
+      <span class="stat-label">Last request (in / out)</span>
+      <span class="stat-detail">most recent request, any client &mdash; not cumulative</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value {{ '' if status.gateway.status == 'ok' else 'warn' }}">
+        <span class="dot {{ 'running' if status.gateway.status == 'ok' else ('down' if status.gateway.status == 'fail' else '') }}"></span>
+        {{ status.gateway.status }}
+      </span>
+      <span class="stat-label">Gateway self-test</span>
+      {% if status.gateway.detail %}<span class="stat-detail">{{ status.gateway.detail }}</span>{% endif %}
+    </div>
+    <div class="stats-bar-spacer"></div>
+    <form method="post" action="/admin/selftest/run"><button type="submit">run self-test</button></form>
+  </div>
+
+  <main>
+    {% if new_key %}
+    <div class="section">
+      <div class="card new-key-banner">
+        <div class="card-title">new key issued &mdash; {{ new_key.label }}</div>
+        <p class="card-note">Copy this now &mdash; it won't be shown again.</p>
+        <code class="token">{{ new_key.token }}</code>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="section">
+      <div class="card">
+        <div class="card-title">Active model</div>
+        <p class="card-note">
+          Applies immediately to the next request on either replica &mdash; no redeploy needed.
+          Type the exact model ID your configured gateway expects (e.g. <code>@cf/qwen/qwen3.8-27b</code>
+          for Cloudflare Workers AI, <code>gpt-4o-mini</code> for OpenAI).
+        </p>
+        <form method="post" action="/admin/model" class="inline-form">
+          <input type="text" name="model" value="{{ status.current_model }}" required>
+          <button type="submit" class="primary">set</button>
+        </form>
+        {% if status.last_model %}<p class="card-note">Last used: {{ status.last_model }}</p>{% endif %}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="card">
+        <div class="card-title">Client API keys</div>
+        <p class="card-note">
+          Requests and tokens below are each key's running total since it was issued &mdash;
+          not the same as "Last request" above, which is just the single most recent call, app-wide.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Label</th><th>Created</th><th>Status</th>
+              <th>Requests</th><th>Cumulative Tokens (in / out)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for k in keys %}
+            <tr>
+              <td>{{ k.label }}</td>
+              <td>{{ k.created_at }}</td>
+              <td><span class="pill {{ '' if k.revoked else 'active' }}">{{ 'revoked' if k.revoked else 'active' }}</span></td>
+              <td>{{ k.usage.requests }}</td>
+              <td>
+                {% if k.usage.requests %}{{ k.usage.prompt_tokens }} / {{ k.usage.completion_tokens }}{% else %}&mdash;{% endif %}
+              </td>
+              <td class="row-actions">
+                {% if not k.revoked %}
+                <form method="post" action="/admin/keys/{{ k.id }}/revoke"><button type="submit">revoke</button></form>
+                {% endif %}
+                <form method="post" action="/admin/keys/{{ k.id }}/delete"><button type="submit" class="danger">delete</button></form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">No keys issued yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <form method="post" action="/admin/keys/issue" class="inline-form">
+          <input type="text" name="label" placeholder="client label, e.g. opencode-mac" required>
+          <button type="submit" class="primary">issue new key</button>
+        </form>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,14 @@
+[project]
+name = "llm-proxy"
+version = "0.1.0"
+description = "Self-hosted OpenAI-compatible relay in front of any AI gateway"
+license = "MIT"
+authors = [{ name = "Nico Fouché" }]
+requires-python = ">=3.10"
+
+[project.urls]
+repository = "https://github.com/roobir/llm-proxy"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

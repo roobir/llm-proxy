@@ -1,0 +1,310 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap');
+
+/* Palette/structure adapted from labber-pve's public/css/style.css (the
+   "final aesthetic" this app is meant to match) -- terminal-flat, sharp
+   corners, JetBrains Mono, green accent glow on active state. Card-grid
+   and stats-bar layout ideas cross-pollinated from nsmp/vendingmachine's
+   panel/stat patterns, re-rendered in labber-pve's palette rather than
+   nsmp's own blue/slate one. */
+
+:root {
+  --bg: #060606;
+  --fg: #d4d4d4;
+  --dim: #6b6b6b;
+  --accent: #27c93f;
+  --danger: #ff5f56;
+  --warn: #e8b339;
+  --border: #1c1c1c;
+  --card-bg: #0d0d0d;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  min-height: 100vh;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code { font-family: inherit; }
+
+/* ---- login page ---- */
+
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-box {
+  border: 1px solid var(--border);
+  padding: 2.5rem 2.5rem 2rem;
+  width: 320px;
+}
+
+.brand {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+.brand::after { content: '_'; color: var(--accent); animation: blink 1.1s steps(1) infinite; }
+
+@keyframes blink { 50% { opacity: 0; } }
+
+.brand-sub { color: var(--dim); font-size: 0.8rem; margin-bottom: 2rem; }
+
+.login-box input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-family: inherit;
+  padding: 0.6rem 0.7rem;
+  margin-bottom: 0.8rem;
+  font-size: 0.9rem;
+}
+.login-box input:focus { outline: none; border-color: var(--accent); }
+
+.login-box button {
+  width: 100%;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  padding: 0.6rem;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.login-box button:hover { opacity: 0.85; }
+
+.login-error {
+  color: var(--danger);
+  font-size: 0.8rem;
+  margin-top: 0.8rem;
+  min-height: 1em;
+}
+
+/* ---- dashboard shell ---- */
+
+.dash-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.5rem;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.dash-header .brand { margin-bottom: 0; font-size: 1.3rem; }
+
+.logout-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--dim);
+  font-family: inherit;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.logout-btn:hover { color: var(--fg); border-color: var(--fg); }
+
+main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 0 2rem;
+}
+
+/* ---- stats bar (top summary row, labber-pve pattern) ---- */
+
+.stats-bar {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+
+.stats-bar-spacer { flex: 1; }
+
+.stat { display: flex; flex-direction: column; gap: 0.15rem; }
+.stat-value { font-size: 1.4rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; }
+.stat-value.warn { color: var(--warn); }
+.stat-value.crit { color: var(--danger); }
+.stat-label { color: var(--dim); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.7rem; }
+.stat-detail { color: var(--dim); font-size: 0.75rem; }
+
+.dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--dim);
+  flex-shrink: 0;
+}
+.dot.running { background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: pulse 1.6s ease-in-out infinite; }
+.dot.partial { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+.dot.down { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* ---- section cards ---- */
+
+.section { padding: 1.5rem 2rem 0; }
+
+.card {
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  padding: 1.25rem 1.5rem;
+  /* A table (or any other wide child -- a long unbroken model ID/URL in a
+     narrow viewport) scrolls within the card instead of forcing the whole
+     page wider than the viewport. */
+  overflow-x: auto;
+}
+
+.card-title {
+  font-size: 0.75rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.6rem;
+  margin: 0 0 1rem;
+}
+
+.card-note { color: var(--dim); font-size: 0.75rem; margin: 0 0 1rem; line-height: 1.5; }
+
+.new-key-banner { border-color: var(--accent); }
+.new-key-banner .token {
+  display: block;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  word-break: break-all;
+  font-size: 0.8rem;
+}
+
+/* ---- forms / inputs / buttons ---- */
+
+.inline-form { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+/* min-width:0 overrides a flex item's default min-width:auto, which for a
+   text <input> resolves to its browser-default intrinsic width (~170px+)
+   -- without this, the input refuses to shrink past that in a narrow
+   viewport and pushes the button next to it off-screen, even though
+   flex:1 alone looks like it should let it shrink freely. */
+.inline-form input { flex: 1; min-width: 0; }
+
+input[type="text"], input[type="password"], textarea {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-family: inherit;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.85rem;
+}
+input[type="text"]:focus, input[type="password"]:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+.form-grid { display: flex; flex-direction: column; gap: 0.9rem; max-width: 520px; }
+.form-grid label { font-size: 0.72rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.3rem; }
+.form-grid input, .form-grid textarea { width: 100%; }
+.form-grid textarea { resize: vertical; min-height: 4.5rem; }
+.form-actions { display: flex; align-items: center; gap: 1rem; }
+
+.field-note { color: var(--dim); font-size: 0.72rem; margin: 0.3rem 0 0; line-height: 1.4; }
+
+.banner {
+  border: 1px solid var(--warn);
+  background: var(--card-bg);
+  padding: 0.9rem 1.5rem;
+  font-size: 0.82rem;
+  margin: 1.5rem 2rem 0;
+  color: var(--warn);
+}
+.banner a { color: var(--warn); text-decoration: underline; }
+.banner.ok { border-color: var(--accent); color: var(--accent); }
+.banner a.ok { color: var(--accent); }
+
+.flash { font-size: 0.78rem; margin-bottom: 0.5rem; }
+.flash.ok { color: var(--accent); }
+.flash.error { color: var(--danger); }
+.flash.editing { color: var(--warn); }
+.flash.editing a { color: var(--warn); text-decoration: underline; }
+
+tr.editing-row td { background: rgba(232, 179, 57, 0.08); }
+
+.nav-links { display: flex; gap: 1rem; align-items: baseline; flex-wrap: wrap; }
+.nav-links a { color: var(--dim); font-size: 0.8rem; }
+.nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+button {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-family: inherit;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+button:hover { border-color: var(--accent); color: var(--accent); }
+button.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+button.primary:hover { opacity: 0.85; color: #000; }
+button.danger:hover { border-color: var(--danger); color: var(--danger); }
+button.link-btn { border: none; padding: 0; color: var(--dim); text-decoration: underline; }
+button.link-btn:hover { color: var(--fg); }
+
+/* An <a> styled to match <button> exactly -- for a row action that
+   navigates (edit) rather than submits (delete), without nesting an
+   interactive <button> inside an <a> (invalid HTML / flaky click targets). */
+.btn-link {
+  display: inline-block;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-family: inherit;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  text-decoration: none;
+}
+.btn-link:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+
+/* ---- key table ---- */
+
+/* table-layout:fixed + break-word on cells guarantees the table itself
+   never exceeds its container's width, even with an unbroken long token
+   (a model ID, a full gateway URL) in a cell -- default auto table layout
+   would otherwise size columns to that content's natural width and force
+   the whole table (and the page, on a narrow viewport) wider than the
+   screen instead of wrapping. */
+table { width: 100%; table-layout: fixed; border-collapse: collapse; margin-bottom: 1.25rem; font-size: 0.8rem; }
+th, td { text-align: left; padding: 0.55rem 0.4rem; border-bottom: 1px solid var(--border); word-break: break-word; overflow-wrap: anywhere; }
+th {
+  color: var(--dim);
+  font-weight: 500;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+tr:hover td { background: rgba(255, 255, 255, 0.02); }
+/* Shrink the actions column to its content instead of getting an equal
+   1/n share under table-layout:fixed (which would waste space here and
+   starve the columns that actually need room for text). */
+td.row-actions { width: 1%; white-space: nowrap; }
+.row-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.row-actions form { display: inline; }
+.row-actions button { padding: 0.3rem 0.6rem; font-size: 0.72rem; }
+
+.pill {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--border);
+  color: var(--dim);
+}
+.pill.active { border-color: var(--accent); color: var(--accent); }

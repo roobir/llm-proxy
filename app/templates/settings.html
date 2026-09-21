@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Proxy &mdash; Settings</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="dash-header">
+    <div class="brand">LLM PROXY</div>
+    <nav class="nav-links">
+      <a href="/admin">dashboard</a>
+      <a href="/admin/settings" class="active">settings</a>
+      <form method="post" action="/admin/logout"><button class="logout-btn" type="submit">sign out ({{ user }})</button></form>
+    </nav>
+  </header>
+
+  <main>
+    <div class="section">
+      <div class="card">
+        <div class="card-title">AI gateway</div>
+        <p class="card-note">
+          Any OpenAI-compatible <code>/v1/chat/completions</code> endpoint works here &mdash; Cloudflare AI
+          Gateway (Workers AI), OpenAI, OpenRouter, Groq, a local Ollama, or anything else that speaks the
+          same shape. Saved settings are shared by every replica immediately, no redeploy needed.
+        </p>
+
+        {% if saved %}<p class="flash ok">Saved.</p>{% endif %}
+        {% if error %}<p class="flash error">{{ error }}</p>{% endif %}
+
+        <form method="post" action="/admin/settings" class="form-grid">
+          <div>
+            <label for="name">Label</label>
+            <input type="text" id="name" name="name" value="{{ gw.name }}" placeholder="e.g. Cloudflare Workers AI">
+          </div>
+
+          <div>
+            <label for="base_url">Base URL</label>
+            <input type="text" id="base_url" name="base_url" value="{{ gw.base_url }}" required
+                   placeholder="https://api.cloudflare.com/client/v4/accounts/&lt;id&gt;/ai/v1/chat/completions">
+            <p class="field-note">The full chat-completions endpoint URL, including any account/org path segment.</p>
+          </div>
+
+          <div>
+            <label for="api_key">API key</label>
+            <input type="password" id="api_key" name="api_key" autocomplete="new-password"
+                   placeholder="{{ 'leave blank to keep the stored key' if has_key else 'required' }}">
+            <p class="field-note">
+              {% if has_key %}A key is currently stored (never shown again after saving). Leave this blank
+              to keep it, or type a new one to replace it.{% else %}Sent as <code>Authorization: Bearer &lt;key&gt;</code>.{% endif %}
+            </p>
+          </div>
+
+          <div>
+            <label for="extra_headers">Extra headers</label>
+            <textarea id="extra_headers" name="extra_headers" placeholder="Header-Name: value">{{ extra_headers_text }}</textarea>
+            <p class="field-note">
+              One per line, e.g. <code>cf-aig-gateway-id: my-gateway</code> for Cloudflare AI Gateway. Optional &mdash;
+              most OpenAI-compatible providers need nothing here beyond the API key above.
+            </p>
+          </div>
+
+          <div>
+            <label for="default_model">Default model</label>
+            <input type="text" id="default_model" name="default_model" value="{{ gw.default_model }}"
+                   placeholder="e.g. @cf/qwen/qwen3.8-27b or gpt-4o-mini">
+            <p class="field-note">
+              Used when no "active model" has been set on the <a href="/admin">dashboard</a> yet.
+            </p>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="primary">save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="card">
+        <div class="card-title">Model aliases</div>
+        <p class="card-note">
+          Pinned named targets for automation (e.g. Commander's <code>delegate_task</code>) &mdash; a client
+          that sends <code>"model": "&lt;alias&gt;"</code> gets routed to that alias's own gateway and model
+          verbatim, unaffected by the dashboard's "active model" switch above. Anything else keeps using the
+          AI gateway configured above, as before.
+        </p>
+
+        {% if alias_error %}<p class="flash error">{{ alias_error }}</p>{% endif %}
+
+        <table>
+          <thead><tr><th>Alias</th><th>Label</th><th>Model</th><th></th></tr></thead>
+          <tbody>
+            {% for a, cfg in aliases.items() %}
+            <tr class="{{ 'editing-row' if a == alias_edit_id else '' }}">
+              <td><code>{{ a }}</code></td>
+              <td>{{ cfg.name }}</td>
+              <td>{{ cfg.default_model }}</td>
+              <td class="row-actions">
+                <a class="btn-link" href="/admin/settings?edit_alias={{ a }}">edit</a>
+                <form method="post" action="/admin/aliases/{{ a }}/delete"><button type="submit" class="danger">delete</button></form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4">No aliases yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        {% if alias_edit_id %}
+        <p class="flash editing">
+          Editing <code>{{ alias_edit_id }}</code> &mdash; <a href="/admin/settings">cancel</a>
+        </p>
+        {% endif %}
+
+        <form method="post" action="/admin/aliases" class="form-grid">
+          <div>
+            <label for="alias">Alias</label>
+            <input type="text" id="alias" name="alias" required pattern="[a-z0-9][a-z0-9_-]{0,63}"
+                   value="{{ alias_edit_id or '' }}" {{ 'readonly' if alias_edit_id else '' }}
+                   placeholder="e.g. qwen-fast, gemini-pro">
+            {% if alias_edit_id %}<p class="field-note">Renaming isn't supported &mdash; delete and re-add under a new alias instead.</p>{% endif %}
+          </div>
+          <div>
+            <label for="alias_name">Label</label>
+            <input type="text" id="alias_name" name="name" value="{{ alias_edit.name if alias_edit else '' }}"
+                   placeholder="e.g. Cloudflare Workers AI (Qwen3.8-27B)">
+          </div>
+          <div>
+            <label for="alias_base_url">Base URL</label>
+            <input type="text" id="alias_base_url" name="base_url" required
+                   value="{{ alias_edit.base_url if alias_edit else '' }}"
+                   placeholder="https://api.cloudflare.com/client/v4/accounts/&lt;id&gt;/ai/v1/chat/completions">
+          </div>
+          <div>
+            <label for="alias_api_key">API key</label>
+            <input type="password" id="alias_api_key" name="api_key" autocomplete="new-password"
+                   placeholder="{{ 'leave blank to keep the stored key' if alias_edit_id else 'required on first save for this alias' }}">
+          </div>
+          <div>
+            <label for="alias_extra_headers">Extra headers</label>
+            <textarea id="alias_extra_headers" name="extra_headers" placeholder="Header-Name: value">{{ alias_extra_headers_text }}</textarea>
+          </div>
+          <div>
+            <label for="alias_default_model">Model</label>
+            <input type="text" id="alias_default_model" name="default_model" required
+                   value="{{ alias_edit.default_model if alias_edit else '' }}"
+                   placeholder="e.g. @cf/google/gemma-3-12b-it">
+            <p class="field-note">Always sent verbatim for this alias &mdash; never overridden by the dashboard's active-model switch.</p>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="primary">{{ 'update alias' if alias_edit_id else 'save alias' }}</button>
+            {% if alias_edit_id %}<a href="/admin/settings">cancel</a>{% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="card">
+        <div class="card-title">Examples</div>
+        <table>
+          <thead><tr><th>Provider</th><th>Base URL</th><th>Extra headers</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Cloudflare&nbsp;AI&nbsp;Gateway<br>(Workers&nbsp;AI)</td>
+              <td><code>https://api.cloudflare.com/client/v4/accounts/&lt;account_id&gt;/ai/v1/chat/completions</code></td>
+              <td><code>cf-aig-gateway-id: &lt;gateway_name&gt;</code></td>
+            </tr>
+            <tr>
+              <td>OpenAI</td>
+              <td><code>https://api.openai.com/v1/chat/completions</code></td>
+              <td>&mdash;</td>
+            </tr>
+            <tr>
+              <td>OpenRouter</td>
+              <td><code>https://openrouter.ai/api/v1/chat/completions</code></td>
+              <td>&mdash;</td>
+            </tr>
+            <tr>
+              <td>Groq</td>
+              <td><code>https://api.groq.com/openai/v1/chat/completions</code></td>
+              <td>&mdash;</td>
+            </tr>
+            <tr>
+              <td>Ollama&nbsp;(local/LAN)</td>
+              <td><code>http://&lt;host&gt;:11434/v1/chat/completions</code></td>
+              <td>&mdash; (API key can be any non-empty string)</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="card-note">
+          Providers whose native API isn't already OpenAI-chat-completions-shaped (e.g. Anthropic's own
+          Messages API) need their OpenAI-compatibility endpoint if they offer one, or won't work here.
+        </p>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

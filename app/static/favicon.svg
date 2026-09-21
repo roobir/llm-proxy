@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Sharp-cornered tile (matches the app's own "flat, sharp corners" card
+       style, not a rounded app-icon like this lab's other, softer apps),
+       same near-black + green accent as the admin GUI itself. -->
+  <rect width="32" height="32" fill="#060606"/>
+  <rect x="0.75" y="0.75" width="30.5" height="30.5" fill="none" stroke="rgba(39,201,63,0.35)" stroke-width="0.75"/>
+
+  <!-- ">>" relay/forward glyph -->
+  <path d="M9.5 8.5 L17 16 L9.5 23.5" fill="none" stroke="#27c93f" stroke-width="3.1"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M17.5 8.5 L25 16 L17.5 23.5" fill="none" stroke="#27c93f" stroke-width="3.1"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
