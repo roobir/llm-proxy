@@ -12,3 +12,8 @@ repository = "https://github.com/roobir/llm-proxy"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# Without this, bare `pytest` (as opposed to `python -m pytest`, which
+# inserts the cwd into sys.path automatically) can't resolve
+# `from app import ...` in tests/conftest.py -- there's no installed
+# package or editable install making `app` importable otherwise.
+pythonpath = ["."]
